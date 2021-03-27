@@ -1,49 +1,80 @@
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import { useState, useEffect, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { CSSTransition } from 'react-transition-group';
 import Notification from '../Notification';
 import '../Notification/Notification.css';
-import { authOperations } from '../../redux/auth';
+import { authOperations, authSelectors } from '../../redux/auth';
+import Loader from '../Loader';
 
-class LoginForm extends Component {
-  state = {
-    email: '',
-    password: '',
-    errorMessage: '',
-  };
+export default function LoginForm() {
+  const dispatch = useDispatch();
 
-  handleChange = event => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const isAuthLoading = useSelector(authSelectors.getAuthLoading);
+  const error = useSelector(authSelectors.getAuthError);
+
+  const onLogin = useCallback(
+    (email, password) => dispatch(authOperations.login(email, password)),
+    [dispatch],
+  );
+  const onClearError = useCallback(() => dispatch(authOperations.onClearErrorMessage()), [
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    if (error) {
+      showNotification(error);
+      onClearError();
+    }
+  }, [error, onClearError]);
+
+  const handleChange = useCallback(event => {
     const { name, value } = event.target;
-    this.setState({ [name]: value });
+    switch (name) {
+      case 'email':
+        setEmail(value);
+        break;
+      case 'password':
+        setPassword(value);
+        break;
+      default:
+        break;
+    }
+  }, []);
+
+  const handleSubmit = useCallback(
+    event => {
+      event.preventDefault();
+
+      if (!email) return showNotification('Please enter email');
+      if (!password) return showNotification('Please enter password');
+
+      onLogin({ email, password });
+      setEmail('');
+      setPassword('');
+    },
+    [email, password, onLogin],
+  );
+
+  const showNotification = errorMessage => {
+    setErrorMessage(errorMessage);
   };
 
-  handleSubmit = event => {
-    event.preventDefault();
-    const { email, password } = this.state;
-    const { onLogin } = this.props;
+  return (
+    <>
+      <div className="Notification-wrapper">
+        <CSSTransition in={!!errorMessage} classNames="Notification" timeout={250} unmountOnExit>
+          <Notification onView={showNotification} message={errorMessage} />
+        </CSSTransition>
+      </div>
 
-    if (!email) return this.showNotification('Please enter email');
-    if (!password) return this.showNotification('Please enter password');
-
-    onLogin({ email, password });
-    this.setState({ email: '', password: '' });
-  };
-
-  showNotification = errorMessage => {
-    this.setState({ errorMessage });
-  };
-
-  render() {
-    const { email, password, errorMessage } = this.state;
-    return (
-      <>
-        <div className="Notification-wrapper">
-          <CSSTransition in={!!errorMessage} classNames="Notification" timeout={250} unmountOnExit>
-            <Notification onView={this.showNotification} message={errorMessage} />
-          </CSSTransition>
-        </div>
-
-        <form onSubmit={this.handleSubmit}>
+      {isAuthLoading ? (
+        <Loader />
+      ) : (
+        <form onSubmit={handleSubmit}>
           <label>
             Email
             <input
@@ -51,7 +82,7 @@ class LoginForm extends Component {
               type="email"
               name="email"
               value={email}
-              onChange={this.handleChange}
+              onChange={handleChange}
             ></input>
           </label>
           <label>
@@ -61,7 +92,7 @@ class LoginForm extends Component {
               type="password"
               name="password"
               value={password}
-              onChange={this.handleChange}
+              onChange={handleChange}
             ></input>
           </label>
           <br />
@@ -73,13 +104,7 @@ class LoginForm extends Component {
             Login
           </button>
         </form>
-      </>
-    );
-  }
+      )}
+    </>
+  );
 }
-
-const mapDispatchToProps = {
-  onLogin: authOperations.login,
-};
-
-export default connect(null, mapDispatchToProps)(LoginForm);

@@ -1,51 +1,83 @@
-import { Component } from 'react';
-import { connect } from 'react-redux';
+import { useState, useEffect, useCallback } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import { CSSTransition } from 'react-transition-group';
 import Notification from '../Notification';
 import '../Notification/Notification.css';
-import { authOperations } from '../../redux/auth';
+import { authOperations, authSelectors } from '../../redux/auth';
+import Loader from '../Loader';
 
-class RegistrationForm extends Component {
-  state = {
-    name: '',
-    email: '',
-    password: '',
-    errorMessage: '',
-  };
+export default function RegistrationForm() {
+  const dispatch = useDispatch();
 
-  handleChange = event => {
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const isAuthLoading = useSelector(authSelectors.getAuthLoading);
+  const error = useSelector(authSelectors.getAuthError);
+
+  const onRegister = useCallback(
+    (name, email, password) => dispatch(authOperations.register(name, email, password)),
+    [dispatch],
+  );
+  const onClearError = useCallback(() => dispatch(authOperations.onClearErrorMessage()), [
+    dispatch,
+  ]);
+
+  useEffect(() => {
+    if (error) {
+      showNotification(error);
+      onClearError();
+    }
+  }, [error, onClearError]);
+
+  const handleChange = useCallback(event => {
     const { name, value } = event.target;
-    this.setState({ [name]: value });
-  };
+    switch (name) {
+      case 'name':
+        setName(value);
+        break;
+      case 'email':
+        setEmail(value);
+        break;
+      case 'password':
+        setPassword(value);
+        break;
+      default:
+        break;
+    }
+  }, []);
 
-  handleSubmit = event => {
+  const handleSubmit = event => {
     event.preventDefault();
-    const { name, email, password } = this.state;
-    const { onRegister } = this.props;
 
-    if (!name) return this.showNotification('Please enter user name');
-    if (!email) return this.showNotification('Please enter email');
-    if (!password) return this.showNotification('Please enter password');
+    if (!name) return showNotification('Please enter user name');
+    if (!email) return showNotification('Please enter email');
+    if (!password) return showNotification('Please enter password');
 
     onRegister({ name, email, password });
-    this.setState({ name: '', email: '', password: '' });
+    setName('');
+    setEmail('');
+    setPassword('');
   };
 
-  showNotification = errorMessage => {
-    this.setState({ errorMessage });
+  const showNotification = errorMessage => {
+    setErrorMessage(errorMessage);
   };
 
-  render() {
-    const { name, email, password, errorMessage } = this.state;
-    return (
-      <>
-        <div className="Notification-wrapper">
-          <CSSTransition in={!!errorMessage} classNames="Notification" timeout={250} unmountOnExit>
-            <Notification onView={this.showNotification} message={errorMessage} />
-          </CSSTransition>
-        </div>
+  return (
+    <>
+      <div className="Notification-wrapper">
+        <CSSTransition in={!!errorMessage} classNames="Notification" timeout={250} unmountOnExit>
+          <Notification onView={showNotification} message={errorMessage} />
+        </CSSTransition>
+      </div>
 
-        <form onSubmit={this.handleSubmit}>
+      {isAuthLoading ? (
+        <Loader />
+      ) : (
+        <form onSubmit={handleSubmit}>
           <label>
             Name
             <input
@@ -53,7 +85,7 @@ class RegistrationForm extends Component {
               type="text"
               name="name"
               value={name}
-              onChange={this.handleChange}
+              onChange={handleChange}
             ></input>
           </label>
           <label>
@@ -63,7 +95,7 @@ class RegistrationForm extends Component {
               type="email"
               name="email"
               value={email}
-              onChange={this.handleChange}
+              onChange={handleChange}
             ></input>
           </label>
           <label>
@@ -73,7 +105,7 @@ class RegistrationForm extends Component {
               type="password"
               name="password"
               value={password}
-              onChange={this.handleChange}
+              onChange={handleChange}
             ></input>
           </label>
           <br />
@@ -85,15 +117,7 @@ class RegistrationForm extends Component {
             Register
           </button>
         </form>
-      </>
-    );
-  }
+      )}
+    </>
+  );
 }
-
-// const mapStateToProps = state => ({ items: contactsSelectors.getAllContacts(state) });
-
-const mapDispatchToProps = {
-  onRegister: authOperations.register,
-};
-
-export default connect(null, mapDispatchToProps)(RegistrationForm);

@@ -1,6 +1,12 @@
 body {
   background-color: #ccc;
 }
+h1 {
+  margin: 10px 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #28a745;
+}
 .btn-phonebook {
   display: inline-block;
   width: 100%;
@@ -165,8 +171,12 @@ label {
 }
 .main h1 {
   font-size: 32px;
+  color: #000;
 }
-.main span {
+.main--green {
+  color: #28a745;
+}
+.main--blue {
   color: #0a519c;
 }
 .Auth-nav {

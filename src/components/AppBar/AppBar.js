@@ -1,4 +1,4 @@
-import { connect } from 'react-redux';
+import { useSelector } from 'react-redux';
 import { CSSTransition } from 'react-transition-group';
 import Logo from '../Logo';
 import Navigation from '../Navigation';
@@ -8,7 +8,8 @@ import { authSelectors } from '../../redux/auth';
 import './AppBar.css';
 import '../Navigation/Navigation.css';
 
-const AppBar = ({ isAuth }) => {
+export default function AppBar() {
+  const isAuth = !!useSelector(authSelectors.getIsAuth);
   return (
     <header className="AppBar-wrapper">
       <CSSTransition in={true} appear={true} classNames="AppBar-logo" timeout={500} unmountOnExit>
@@ -18,10 +19,4 @@ const AppBar = ({ isAuth }) => {
       {isAuth ? <UserMenu /> : <AuthNav />}
     </header>
   );
-};
-
-const mapStateToProps = state => ({
-  isAuth: !!authSelectors.getIsAuth(state),
-});
-
-export default connect(mapStateToProps)(AppBar);
+}

@@ -13,7 +13,7 @@ import Loader from './components/Loader';
 ReactDOM.render(
   <React.StrictMode>
     <Provider store={store.store}>
-      <PersistGate loading={<Loader className="pre-loader" />} persistor={store.persistor}>
+      <PersistGate loading={<Loader />} persistor={store.persistor}>
         <BrowserRouter>
           <App />
         </BrowserRouter>
