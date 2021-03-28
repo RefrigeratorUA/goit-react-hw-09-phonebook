@@ -22,7 +22,7 @@ export default function App() {
       <Suspense fallback={<Loader />}>
         <Switch>
           {routes.map(route => {
-            const { component: Component } = route;
+            const { comp: Component } = route;
             return route.privat ? (
               <PrivateRoute key={route.name} {...route}>
                 <Component />
